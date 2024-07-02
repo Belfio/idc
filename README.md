@@ -17,8 +17,8 @@ Traditional company structures are often centralized, lack transparency, and can
 ## Usage
 
 ### Deployment
-1. Deploy the IDCCore contract, providing the company name, jurisdiction, and URI for the ERC1155 tokens.
-2. The IDCCore contract will automatically deploy ShareholderManager and TreasuryManager contracts.
+- Deploy the IDCCore contract, providing the company name, jurisdiction, and URI for the ERC1155 tokens.
+- The IDCCore contract will automatically deploy ShareholderManager and TreasuryManager contracts.
 
 ### Interacting with the Contract
 All interactions should be done through the IDCCore contract, which will delegate operations to the appropriate manager contract.
@@ -37,49 +37,144 @@ All interactions should be done through the IDCCore contract, which will delegat
 3. Administrative Functions:
    - Set or remove admin rights for an address
 
+## Implementation notes
+This implementation:
+
+- Uses OpenZeppelin's Governor contract and several extensions for comprehensive DAO functionality.
+- Implements a custom ShareToken contract that extends ERC1155 and ERC1155Votes for token-based voting.
+- Keeps the TreasuryManager for handling funds.
+- Integrates all these components in the IDCCore contract.
+
+Key points:
+
+- The ShareToken contract represents shares as ERC1155 tokens and supports voting.
+- The Governor contract provides full DAO functionality including proposal creation, voting, and execution.
+- The TreasuryManager handles fund management, controlled by governance decisions.
+- Governance functions (like minting/burning shares, withdrawing/sending funds) are protected by the onlyGovernance modifier.
+
+To deploy this:
+
+- Deploy a TimelockController contract first.
+- Deploy the IDCCore contract, passing the TimelockController address as a parameter.
+
+This implementation provides a robust, flexible, and standardized DAO structure for your IDC. It allows for:
+
+- Token-based voting
+- Proposal creation and execution
+- Timelock for executing decisions
+- Quorum and voting thresholds
+
+Remember, you'll need to set up the proper roles and permissions in the TimelockController to work correctly with this Governor setup.
+
 ## API Description
+## VotingToken
 
-### IDCCore
+ERC20 token representing voting power in the IDC.
 
-#### Constructor
-- `constructor(string memory _name, string memory _jurisdiction, string memory _uri)`
-  - Initializes the IDC with a name, jurisdiction, and URI for ERC1155 tokens
+### Functions
 
-#### Admin Functions
-- `setAdmin(address _address, bool _isAdmin)`
-  - Sets or removes admin rights for an address
+- `constructor(string memory name, string memory symbol)`
+  - Initializes the voting token with a name and symbol.
 
-#### Shareholder Management
-- `mintShares(address to, uint256 amount)`
-  - Mints new shares to the specified address
-- `burnShares(address from, uint256 amount)`
-  - Burns shares from the specified address
+- `mint(address to, uint256 amount) public onlyOwner`
+  - Mints new voting tokens to the specified address.
 
-#### Treasury Management
-- `withdraw(uint256 amount)`
-  - Withdraws the specified amount from the company's funds
-- `sendFunds(address payable recipient, uint256 amount)`
-  - Sends the specified amount to the recipient address
+- `burn(address from, uint256 amount) public onlyOwner`
+  - Burns voting tokens from the specified address.
 
-### ShareholderManager
+- `delegate(address delegatee) public virtual override`
+  - Delegates voting power to another address.
 
-- `mintShares(address to, uint256 amount)`
-  - Mints new shares to the specified address
-- `burnShares(address from, uint256 amount)`
-  - Burns shares from the specified address
-- `isShareHolder(address account)`
-  - Checks if the specified address is a shareholder
+- `delegates(address account) public view virtual override returns (address)`
+  - Returns the address that `account` has delegated their voting power to.
 
-### TreasuryManager
+- `getVotes(address account) public view virtual override returns (uint256)`
+  - Returns the current voting power for `account`.
 
-- `withdraw(uint256 amount)`
-  - Withdraws the specified amount
-- `sendFunds(address payable recipient, uint256 amount)`
-  - Sends the specified amount to the recipient address
-- `getBalance()`
-  - Returns the current balance of the treasury
+## ShareToken
 
-Note: The ShareholderManager and TreasuryManager contracts are owned and controlled by the IDCCore contract. Direct interaction with these contracts should be avoided in favor of using the IDCCore contract's interface.
+ERC1155 token representing ownership shares in the IDC.
+
+### Functions
+
+- `constructor(string memory uri)`
+  - Initializes the share token with a metadata URI.
+
+- `mintShares(address to, uint256 amount) public onlyOwner`
+  - Mints new shares
+- ## IDCCore
+
+Main contract for the Internet Decentralized Company (IDC), implementing OpenZeppelin's Governor functionality.
+
+### Properties
+
+- `companyName`: Name of the company (string)
+- `jurisdiction`: Jurisdiction of the company (string)
+- `votingToken`: Address of the VotingToken contract
+- `shareToken`: Address of the ShareToken contract
+- `treasuryManager`: Address of the TreasuryManager contract
+
+### Constructor
+
+- `constructor(string memory _name, string memory _jurisdiction, string memory _shareTokenUri, TimelockController _timelock)`
+  - Initializes the IDC with a name, jurisdiction, share token URI, and timelock controller.
+
+### Governance Functions
+
+- `propose(address[] memory targets, uint256[] memory values, bytes[] memory calldatas, string memory description) public override(Governor, IGovernor) returns (uint256)`
+  - Creates a new proposal.
+
+- `execute(uint256 proposalId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash) public payable override(Governor, IGovernor) returns (uint256)`
+  - Executes a successful proposal.
+
+- `cancel(uint256 proposalId, address[] memory targets, uint256[] memory values, bytes[] memory calldatas, bytes32 descriptionHash) public override(Governor, IGovernor) returns (uint256)`
+  - Cancels a proposal.
+
+- `castVote(uint256 proposalId, uint8 support) public override(Governor) returns (uint256)`
+  - Casts a vote on a proposal.
+
+### Token Management Functions
+
+- `mintShares(address to, uint256 amount) public onlyGovernance`
+  - Mints new shares to the specified address.
+
+- `burnShares(address from, uint256 amount) public onlyGovernance`
+  - Burns shares from the specified address.
+
+- `mintVotingTokens(address to, uint256 amount) public onlyGovernance`
+  - Mints new voting tokens to the specified address.
+
+- `burnVotingTokens(address from, uint256 amount) public onlyGovernance`
+  - Burns voting tokens from the specified address.
+
+### Treasury Management Functions
+
+- `withdrawFunds(uint256 amount) public onlyGovernance`
+  - Withdraws funds from the treasury.
+
+- `sendFunds(address payable recipient, uint256 amount) public onlyGovernance`
+  - Sends funds to a specified recipient.
+
+### View Functions
+
+- `votingDelay() public view override(IGovernor, GovernorSettings) returns (uint256)`
+  - Returns the delay between proposal creation and voting start.
+
+- `votingPeriod() public view override(IGovernor, GovernorSettings) returns (uint256)`
+  - Returns the voting period duration.
+
+- `quorum(uint256 blockNumber) public view override(IGovernor, GovernorVotesQuorumFraction) returns (uint256)`
+  - Returns the minimum number of votes required for a proposal to succeed.
+
+- `state(uint256 proposalId) public view override(Governor, GovernorTimelockControl) returns (ProposalState)`
+  - Returns the current state of a proposal.
+
+- `proposalThreshold() public view override(Governor, GovernorSettings) returns (uint256)`
+  - Returns the minimum number of votes required to create a proposal.
+
+- `supportsInterface(bytes4 interfaceId) public view override(Governor, GovernorTimelockControl) returns (bool)`
+  - Checks if the contract supports a given interface.
+
 ## Foundry
 
 **Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
