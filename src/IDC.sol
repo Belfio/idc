@@ -161,7 +161,8 @@ contract IDCCore is
     constructor(
         string memory _companyNameURI,
         string memory _jurisdiction,
-        string memory _shareTokenUri,
+        string memory _shareTokenUri, //this should be connected to the company name (what happens if you change the comapny name??)
+        string memory _votingTokenUri, //this should be connnected to the company name (what happens if you change the company name??)
         TimelockController _timelock
     )
         Governor("IDCGovernor")
@@ -171,7 +172,7 @@ contract IDCCore is
         GovernorTimelockControl(_timelock)
     {
         jurisdiction = _jurisdiction;
-        votingToken = new VotingToken("IDC Voting Token", "IDCVT");
+        votingToken = new VotingToken("IDC Voting Token", _votingTokenUri); //The name should be connected to the company name and the symbol name
         shareToken = new ShareToken(_shareTokenUri);
         treasuryManager = new TreasuryManager();
         companyNameNFT = new CompanyNameNFT();
