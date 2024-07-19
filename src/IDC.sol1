@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.13;
 
+
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol"; 
@@ -54,92 +55,92 @@ contract VotingToken is ERC20, ERC20Votes, ERC20Permit, Ownable {
     }
 }
 
-contract ShareToken is ERC1155, Ownable {
-    uint256 public constant SHARE_TOKEN_ID = 0;
-    uint256 public totalShares;
+// contract ShareToken is ERC1155, Ownable {
+//     uint256 public constant SHARE_TOKEN_ID = 0;
+//     uint256 public totalShares;
 
-    constructor(string memory uri) ERC1155(uri) {}
+//     constructor(string memory uri) ERC1155(uri) {}
 
-    function mintShares(address to, uint256 amount) public onlyOwner {
-        _mint(to, SHARE_TOKEN_ID, amount, "");
-        totalShares += amount;
-    }
+//     function mintShares(address to, uint256 amount) public onlyOwner {
+//         _mint(to, SHARE_TOKEN_ID, amount, "");
+//         totalShares += amount;
+//     }
 
-    function burnShares(address from, uint256 amount) public onlyOwner {
-        require(
-            balanceOf(from, SHARE_TOKEN_ID) >= amount,
-            "Insufficient shares"
-        );
-        _burn(from, SHARE_TOKEN_ID, amount);
-        totalShares -= amount;
-    }
+//     function burnShares(address from, uint256 amount) public onlyOwner {
+//         require(
+//             balanceOf(from, SHARE_TOKEN_ID) >= amount,
+//             "Insufficient shares"
+//         );
+//         _burn(from, SHARE_TOKEN_ID, amount);
+//         totalShares -= amount;
+//     }
 
-    function transferShares(address from, address to, uint256 amount) public {
-        require(
-            from == msg.sender || isApprovedForAll(from, msg.sender),
-            "Not authorized"
-        );
-        safeTransferFrom(from, to, SHARE_TOKEN_ID, amount, "");
-    }
+//     function transferShares(address from, address to, uint256 amount) public {
+//         require(
+//             from == msg.sender || isApprovedForAll(from, msg.sender),
+//             "Not authorized"
+//         );
+//         safeTransferFrom(from, to, SHARE_TOKEN_ID, amount, "");
+//     }
 
-    function sharesOf(address account) public view returns (uint256) {
-        return balanceOf(account, SHARE_TOKEN_ID);
-    }
-}
+//     function sharesOf(address account) public view returns (uint256) {
+//         return balanceOf(account, SHARE_TOKEN_ID);
+//     }
+// }
 
-contract CompanyNameNFT is ERC721URIStorage, Ownable {
-    uint256 private _tokenIdCounter;
+// contract CompanyNameNFT is ERC721URIStorage, Ownable {
+//     uint256 private _tokenIdCounter;
 
-    constructor() ERC721("CompanyNameNFT", "CNFT") {}
+//     constructor() ERC721("CompanyNameNFT", "CNFT") {}
 
-    function mintNFT(
-        address to,
-        string memory uri
-    ) public onlyOwner returns (uint256) {
-        _tokenIdCounter++;
-        uint256 newItemId = _tokenIdCounter;
-        _mint(to, newItemId);
-        _setTokenURI(newItemId, uri);
-        return newItemId;
-    }
+//     function mintNFT(
+//         address to,
+//         string memory uri
+//     ) public onlyOwner returns (uint256) {
+//         _tokenIdCounter++;
+//         uint256 newItemId = _tokenIdCounter;
+//         _mint(to, newItemId);
+//         _setTokenURI(newItemId, uri);
+//         return newItemId;
+//     }
 
-    function burnNFT(uint256 tokenId) public {
-        require(ownerOf(tokenId) == msg.sender, "You do not own this token");
-        _burn(tokenId);
-    }
-}
+//     function burnNFT(uint256 tokenId) public {
+//         require(ownerOf(tokenId) == msg.sender, "You do not own this token");
+//         _burn(tokenId);
+//     }
+// }
 
-contract TreasuryManager {
-    address public owner;
+// contract TreasuryManager {
+//     address public owner;
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Not the owner");
-        _;
-    }
+//     modifier onlyOwner() {
+//         require(msg.sender == owner, "Not the owner");
+//         _;
+//     }
 
-    constructor() {
-        owner = msg.sender;
-    }
+//     constructor() {
+//         owner = msg.sender;
+//     }
 
-    function withdraw(uint256 amount) public onlyOwner {
-        require(address(this).balance >= amount, "Insufficient balance");
-        payable(owner).transfer(amount);
-    }
+//     function withdraw(uint256 amount) public onlyOwner {
+//         require(address(this).balance >= amount, "Insufficient balance");
+//         payable(owner).transfer(amount);
+//     }
 
-    function sendFunds(
-        address payable recipient,
-        uint256 amount
-    ) public onlyOwner {
-        require(address(this).balance >= amount, "Insufficient balance");
-        recipient.transfer(amount);
-    }
+//     function sendFunds(
+//         address payable recipient,
+//         uint256 amount
+//     ) public onlyOwner {
+//         require(address(this).balance >= amount, "Insufficient balance");
+//         recipient.transfer(amount);
+//     }
 
-    function getBalance() public view returns (uint256) {
-        return address(this).balance;
-    }
+//     function getBalance() public view returns (uint256) {
+//         return address(this).balance;
+//     }
 
-    receive() external payable {}
-}
+//     receive() external payable {}
+// }
 
 // contract IDCCore is
 //     Governor,
